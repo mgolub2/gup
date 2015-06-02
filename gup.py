@@ -92,7 +92,7 @@ def createDir(parentFolderTuple):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Upload directory to gdrive")
     parser.add_argument('folder', type=str, help="Path to folder to open")
-    parser.add_argument('-c', '--create', help="Disable creating directories in gdrive",
+    parser.add_argument('-c', '--no-create', help="Disable creating directories in gdrive",
                         action='store_false', default=True)
     parser.add_argument('-n', '--num_connections', help="Number of connections to open to Google drive",
                         default=THREADS)
