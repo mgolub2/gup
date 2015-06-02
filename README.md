@@ -1,5 +1,8 @@
 #Google Upload Python (GUP)
 
+A simple way to upload a directory with sub directories to Google Drive in parallel. With largish files and 10
+connections, speeds of over 90MB/s have been seen.
+
 ##Installation
 First, setup the drive cli client located here: https://github.com/prasmussen/gdrive
 Then either copy gup.py to somewhere on your path, or simply run it from the directory.
