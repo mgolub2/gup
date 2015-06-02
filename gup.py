@@ -12,8 +12,8 @@ import argparse
 import os
 import subprocess
 
-THREADS = 10
-
+THREADS = 10 #Number of threads.
+MAXCOUNT = 1000 # Max number of retries.
 
 def main(args):
     """
@@ -25,9 +25,10 @@ def main(args):
     if args.folder[-1] == '/':
         args.folder = args.folder[0:-1]
     #Begin creating directories
+    #TODO refactor to be less wastefull.
     if args.create:
         print("****Creating directories****")
-        dirToID = createDir((None, args.folder, dirToID))
+        dirToID = createDir((None, args.folder, dirToID)) #Create the root directory.
     for root, dirs, files in os.walk(args.folder):
         if args.create:
             directoryTuples = [(root, dir, dirToID) for dir in dirs] #so inffecient...
@@ -62,6 +63,7 @@ def createDir(parentFolderTuple):
     Create the directory structure and save the ids
     tuple should be in the form parent, folder, dirToID
     """
+    #TODO limit number of attempt to retry directory creation.
     parent, folder, dirToID = parentFolderTuple
     fullPath = folder
     if parent is not None:
