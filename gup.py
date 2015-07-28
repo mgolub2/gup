@@ -73,6 +73,8 @@ def upload(f, count=0):
         if count < MAXCOUNT:
             time.sleep(1+random.random())
             upload(f, count + 1)
+        else:
+            print("FINAL ATTEMPT FAILED: "+f.name)
 
 
 def create_dir(folder, count=0):
@@ -95,6 +97,8 @@ def create_dir(folder, count=0):
         if count < MAXCOUNT:
             time.sleep(1+random.random())
             return create_dir(folder, count+ 1) # Try again
+        else:
+            print("FINAL ATTEMPT FAILED: "+folder.name)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Upload directory to gdrive")
