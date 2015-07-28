@@ -81,7 +81,7 @@ def create_dir(folder, count=0):
     tuple should be in the form parent, folder, dirToID
     """
 
-    if folder.parentID is None:
+    if folder.parent_ID is None:
         cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name]
     else:
         cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name, "-p", folder.parent_ID]
