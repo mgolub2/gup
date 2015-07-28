@@ -11,9 +11,21 @@ import multiprocessing
 import argparse
 import os
 import subprocess
+import time
+import random
 
 THREADS = 10 #Number of threads.
 MAXCOUNT = 1000 # Max number of retries.
+
+
+class File(object):
+    """
+    Class to represent a file (or folder!) to be uploaded to google drive
+    """
+    def __init__(self, name, path, parentID=None):
+        self.name = name
+        self.path = path
+        self.parentID = parentID
 
 def main(args):
     """
@@ -25,17 +37,23 @@ def main(args):
     if args.folder[-1] == '/':
         args.folder = args.folder[0:-1]
     #Begin creating directories
-    #TODO refactor to be less wastefull.
-    if args.create:
-        print("****Creating directories****")
-        dirToID = createDir((None, args.folder, dirToID)) #Create the root directory.
+    print("****Creating directories****")
+    #Create the initial directory.
+    tuple_root_id = createDir(File(args.folder, os.path.abspath(args.folder), None)) #Create the root directory.
+    dict_dir_to_id = {tuple_root_id[0]: tuple_root_id[1]}
     for root, dirs, files in os.walk(args.folder):
-        if args.create:
-            directoryTuples = [(root, dir, dirToID) for dir in dirs] #so inffecient...
-            dirToIDArray = pool.map(createDir, directoryTuples)
-            dirToID = {k : v for d in dirToIDArray for k, v in d.items()}
-    if args.create:
-        print("****Created directories****")
+        #Get the true path of the root.
+        root = os.path.abspath(root)
+        #Create file objects from the current dirs.
+        file_dirs = [File(DIR, os.path.join(root, DIR), dict_dir_to_id[root]) for DIR in dirs]
+        #Create the dirs in parallel, Get a tuple of (directory, id)
+        tuple_directories_ids = pool.map(createDir, file_dirs)
+        #Add the ids from the previous map call to the directory -> id mapping
+        for directory, id, in tuple_directories_ids:
+            dict_dir_to_id[directory] = id
+        #Append file objects to an array for future uploading
+        toUpload += [File(file, os.path.join(root,file), dict_dir_to_id[root]) for file in files] #
+    print("****Created directories****")
     numFiles = len(toUpload)
     print("****Uploading {0} files****".format(numFiles))
     pool.map(upload, toUpload)
@@ -44,56 +62,42 @@ def main(args):
     pool.join()
 
 
-def upload(fileNameParentTuple, count=0):
+def upload(f, count=0):
     """
     upload a file to the correct directory
     """
-    f, name, parent = fileNameParentTuple
     try:
-        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", name, "-p", parent, "-f", f])
-        print("Uploaded: " + name)
+        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", f.name, "-p", f.parent, "-f", f.path])
+        print("Uploaded: " + f.name)
     except subprocess.CalledProcessError:
-        print("FAILED: " + name)
+        print("FAILED: " + f.name)
         if count < MAXCOUNT:
-            upload(fileNameParentTuple, count + 1)
+            upload(f, count + 1)
 
 
-def createDir(parentFolderTuple):
+def createDir(folder, count=0):
     """
     Create the directory structure and save the ids
     tuple should be in the form parent, folder, dirToID
     """
-    #TODO limit number of attempt to retry directory creation.
-    parent, folder, dirToID = parentFolderTuple
-    fullPath = folder
-    if parent is not None:
-        fullPath = os.path.join(parent,folder)
-    name = os.path.basename(fullPath)
-    parentID = None
-    try:
-        parentID = dirToID[parent]
-    except KeyError:
-        pass
-    #Create the command
-    if parentID is None:
-        cmd = ["/usr/local/bin/drive", "folder", "-t", name]
+
+    if folder.parentID is None:
+        cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name]
     else:
-        cmd = ["/usr/local/bin/drive", "folder", "-t", name, "-p", parentID]
+        cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name, "-p", folder.parentID]
     try:
         #Run the command
         output = subprocess.check_output(cmd)
-        dirToID[fullPath] = output.split()[1]
-        print("Created {0}".format(name))
-        return dirToID
+        print("Created {0}".format(folder.name))
+        return (folder.path, output.split()[1]) #Id of this folder
     except subprocess.CalledProcessError:
-        print ("FAILED: " + name)
-        return createDir(parentFolderTuple) # naively try again
+        print ("FAILED: " + folder.name)
+        time.sleep(1+random.Random())
+        return createDir(folder, count+ 1) # Try again
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Upload directory to gdrive")
     parser.add_argument('folder', type=str, help="Path to folder to open")
-    parser.add_argument('-c', '--no-create', help="Disable creating directories in gdrive",
-                        action='store_false', default=True)
     parser.add_argument('-n', '--num_connections', help="Number of connections to open to Google drive",
                         default=THREADS)
     args = parser.parse_args()
