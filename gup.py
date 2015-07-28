@@ -67,11 +67,12 @@ def upload(f, count=0):
     upload a file to the correct directory
     """
     try:
-        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", f.name, "-p", f.parent, "-f", f.path])
+        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", f.name, "-p", f.parentID, "-f", f.path])
         print("Uploaded: " + f.name)
     except subprocess.CalledProcessError:
         print("FAILED: " + f.name)
         if count < MAXCOUNT:
+            time.sleep(1+random.Random())
             upload(f, count + 1)
 
 
@@ -92,8 +93,9 @@ def createDir(folder, count=0):
         return (folder.path, output.split()[1]) #Id of this folder
     except subprocess.CalledProcessError:
         print ("FAILED: " + folder.name)
-        time.sleep(1+random.Random())
-        return createDir(folder, count+ 1) # Try again
+        if count < MAXCOUNT:
+            time.sleep(1+random.Random())
+            return createDir(folder, count+ 1) # Try again
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Upload directory to gdrive")
