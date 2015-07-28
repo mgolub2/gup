@@ -71,7 +71,7 @@ def upload(f, count=0):
     except subprocess.CalledProcessError:
         print("FAILED: " + f.name)
         if count < MAXCOUNT:
-            time.sleep(1+random.Random())
+            time.sleep(1+random.random())
             upload(f, count + 1)
 
 
@@ -93,7 +93,7 @@ def create_dir(folder, count=0):
     except subprocess.CalledProcessError:
         print ("FAILED: " + folder.name)
         if count < MAXCOUNT:
-            time.sleep(1+random.Random())
+            time.sleep(1+random.random())
             return create_dir(folder, count+ 1) # Try again
 
 if __name__ == '__main__':
