@@ -66,7 +66,7 @@ def upload(f, count=0):
     upload a file to the correct directory
     """
     try:
-        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", f.name, "-p", f.parentID, "-f", f.path])
+        output = subprocess.check_output(["/usr/local/bin/drive", "upload", "-t", f.name, "-p", f.parent_ID, "-f", f.path])
         print("Uploaded: " + f.name)
     except subprocess.CalledProcessError:
         print("FAILED: " + f.name)
