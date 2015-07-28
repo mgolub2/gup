@@ -22,24 +22,23 @@ class File(object):
     """
     Class to represent a file (or folder!) to be uploaded to google drive
     """
-    def __init__(self, name, path, parentID=None):
+    def __init__(self, name, path, parent_ID=None):
         self.name = name
         self.path = path
-        self.parentID = parentID
+        self.parent_ID = parent_ID
 
 def main(args):
     """
     Creates pools for mapping to all the files the directory.
     """
-    toUpload = []
-    dirToID = {}
+    to_upload = []
     pool = multiprocessing.Pool(args.num_connections)
     if args.folder[-1] == '/':
         args.folder = args.folder[0:-1]
     #Begin creating directories
     print("****Creating directories****")
     #Create the initial directory.
-    tuple_root_id = createDir(File(args.folder, os.path.abspath(args.folder), None)) #Create the root directory.
+    tuple_root_id = create_dir(File(args.folder, os.path.abspath(args.folder), None)) #Create the root directory.
     dict_dir_to_id = {tuple_root_id[0]: tuple_root_id[1]}
     for root, dirs, files in os.walk(args.folder):
         #Get the true path of the root.
@@ -47,16 +46,16 @@ def main(args):
         #Create file objects from the current dirs.
         file_dirs = [File(DIR, os.path.join(root, DIR), dict_dir_to_id[root]) for DIR in dirs]
         #Create the dirs in parallel, Get a tuple of (directory, id)
-        tuple_directories_ids = pool.map(createDir, file_dirs)
+        tuple_directories_ids = pool.map(create_dir, file_dirs)
         #Add the ids from the previous map call to the directory -> id mapping
         for directory, id, in tuple_directories_ids:
             dict_dir_to_id[directory] = id
         #Append file objects to an array for future uploading
-        toUpload += [File(file, os.path.join(root,file), dict_dir_to_id[root]) for file in files] #
+        to_upload += [File(file, os.path.join(root,file), dict_dir_to_id[root]) for file in files] #
     print("****Created directories****")
-    numFiles = len(toUpload)
+    numFiles = len(to_upload)
     print("****Uploading {0} files****".format(numFiles))
-    pool.map(upload, toUpload)
+    pool.map(upload, to_upload)
     print("****Upload complete****")
     pool.close()
     pool.join()
@@ -76,7 +75,7 @@ def upload(f, count=0):
             upload(f, count + 1)
 
 
-def createDir(folder, count=0):
+def create_dir(folder, count=0):
     """
     Create the directory structure and save the ids
     tuple should be in the form parent, folder, dirToID
@@ -85,7 +84,7 @@ def createDir(folder, count=0):
     if folder.parentID is None:
         cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name]
     else:
-        cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name, "-p", folder.parentID]
+        cmd = ["/usr/local/bin/drive", "folder", "-t", folder.name, "-p", folder.parent_ID]
     try:
         #Run the command
         output = subprocess.check_output(cmd)
@@ -95,7 +94,7 @@ def createDir(folder, count=0):
         print ("FAILED: " + folder.name)
         if count < MAXCOUNT:
             time.sleep(1+random.Random())
-            return createDir(folder, count+ 1) # Try again
+            return create_dir(folder, count+ 1) # Try again
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Upload directory to gdrive")
