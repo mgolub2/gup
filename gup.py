@@ -32,7 +32,7 @@ def main(args):
     Creates pools for mapping to all the files the directory.
     """
     to_upload = []
-    pool = multiprocessing.Pool(args.num_connections)
+    pool = multiprocessing.Pool(int(args.num_connections))
     if args.folder[-1] == '/':
         args.folder = args.folder[0:-1]
     #Begin creating directories
